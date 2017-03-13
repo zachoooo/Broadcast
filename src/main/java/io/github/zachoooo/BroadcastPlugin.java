@@ -17,6 +17,8 @@ import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.serializer.TextSerializer;
+import org.spongepowered.api.text.serializer.TextSerializers;
 
 import java.io.IOException;
 import java.net.URL;
@@ -82,7 +84,8 @@ public class BroadcastPlugin {
             return;
         }
         try {
-            for (Text text : rootNode.getNode("messages").getList(TypeToken.of(Text.class))) {
+            for (String s : rootNode.getNode("messages").getList(TypeToken.of(String.class))) {
+                Text text = TextSerializers.FORMATTING_CODE.deserialize(s);
                 broadcasts.add(new BroadcastAnnounce(this, text));
             }
         } catch (ObjectMappingException e) {
@@ -103,15 +106,10 @@ public class BroadcastPlugin {
         }
         getLogger().info("Successfully loaded messages.");
         long delay = rootNode.getNode("delay").getInt();
-        Task.builder().async().interval(delay, TimeUnit.SECONDS).name("Broadcast - Schedule Messages").execute(new Runnable() {
-
-            @Override
-            public void run() {
-                Random random = new Random();
-                Broadcast randomBroadcast = broadcasts.get(random.nextInt(broadcasts.size()));
-                randomBroadcast.runBroadcast();
-            }
-
+        Task.builder().async().interval(delay, TimeUnit.SECONDS).name("Broadcast - Schedule Messages").execute(() -> {
+            Random random = new Random();
+            Broadcast randomBroadcast = broadcasts.get(random.nextInt(broadcasts.size()));
+            randomBroadcast.runBroadcast();
         }).submit(this);
     }
 
