@@ -1,0 +1,11 @@
+plugins {
+    id 'org.spongepowered.plugin' version '0.8.1'
+}
+
+group = 'io.github.zachoooo'
+version = '1.0-SNAPSHOT'
+description = 'An example plugin'
+
+dependencies {
+    compile 'org.spongepowered:spongeapi:5.1.0'
+}
