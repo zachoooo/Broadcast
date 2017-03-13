@@ -17,7 +17,6 @@ import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.serializer.TextSerializer;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
 import java.io.IOException;
@@ -61,6 +60,7 @@ public class BroadcastPlugin {
     private ConfigurationLoader<CommentedConfigurationNode> config;
 
     private List<Broadcast> broadcasts = new ArrayList<Broadcast>();
+    private int messageIndex = 0;
 
     @Listener
     public void onServerStart(GameStartedServerEvent event) {
@@ -85,7 +85,7 @@ public class BroadcastPlugin {
         }
         try {
             for (String s : rootNode.getNode("messages").getList(TypeToken.of(String.class))) {
-                Text text = TextSerializers.FORMATTING_CODE.deserialize(s);
+                Text text = TextSerializers.FORMATTING_CODE.deserialize(rootNode.getNode("prefix"). getString() + s);
                 broadcasts.add(new BroadcastAnnounce(this, text));
             }
         } catch (ObjectMappingException e) {
@@ -107,9 +107,17 @@ public class BroadcastPlugin {
         getLogger().info("Successfully loaded messages.");
         long delay = rootNode.getNode("delay").getInt();
         Task.builder().async().interval(delay, TimeUnit.SECONDS).name("Broadcast - Schedule Messages").execute(() -> {
-            Random random = new Random();
-            Broadcast randomBroadcast = broadcasts.get(random.nextInt(broadcasts.size()));
-            randomBroadcast.runBroadcast();
+            if (rootNode.getNode("random").getBoolean(false)) {
+                Random random = new Random();
+                Broadcast randomBroadcast = broadcasts.get(random.nextInt(broadcasts.size()));
+                randomBroadcast.runBroadcast();
+            } else {
+                Broadcast broadcast = broadcasts.get(messageIndex++);
+                broadcast.runBroadcast();
+                if (messageIndex == broadcasts.size()) {
+                    messageIndex = 0;
+                }
+            }
         }).submit(this);
     }
 
