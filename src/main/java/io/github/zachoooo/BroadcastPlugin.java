@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-@Plugin(id = "broadcast", name = "Broadcast", version = "1.1.1", description = "Automatically make broadcasts to your server.")
+@Plugin(id = "broadcast", name = "Broadcast", version = "1.1.2", description = "Automatically make broadcasts to your server.")
 public class BroadcastPlugin {
 
     @Inject
@@ -127,8 +127,8 @@ public class BroadcastPlugin {
             return;
         }
         try {
-            for (String s : rootNode.getNode("messages").getList(TypeToken.of(String.class))) {
-                Text text = TextSerializers.FORMATTING_CODE.deserialize(rootNode.getNode("prefix").getString() + s);
+            for (Text text : rootNode.getNode("messages").getList(TypeToken.of(Text.class))) {
+                text = rootNode.getNode("prefix").getValue(TypeToken.of(Text.class)).concat(text);
                 broadcasts.add(new BroadcastAnnounce(this, text));
             }
         } catch (ObjectMappingException e) {
