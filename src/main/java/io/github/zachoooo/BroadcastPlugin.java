@@ -4,7 +4,6 @@ import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.github.zachoooo.broadcast.Broadcast;
 import io.github.zachoooo.broadcast.BroadcastAnnounce;
-import io.github.zachoooo.command.ReloadCommand;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -12,9 +11,9 @@ import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.event.Listener;
+import org.spongepowered.api.event.game.GameReloadEvent;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.scheduler.Task;
@@ -48,7 +47,7 @@ import java.util.concurrent.TimeUnit;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 @Plugin(id = "broadcast", name = "Broadcast", version = "1.1", description = "Automatically make broadcasts to your server.")
-public class    BroadcastPlugin {
+public class BroadcastPlugin {
 
     @Inject
     private Logger logger;
@@ -68,12 +67,14 @@ public class    BroadcastPlugin {
     @Listener
     public void onServerStart(GameStartedServerEvent event) {
         loadMessages();
-        CommandSpec reloadCommand = CommandSpec.builder()
-                .description(Text.of("Reload the configuration for Broadcast"))
-                .permission("broadcast.admin")
-                .executor(new ReloadCommand(this))
-                .build();
-        Sponge.getCommandManager().register(this, reloadCommand, "broadcast-reload");
+    }
+
+    @Listener
+    public void reload(GameReloadEvent event) {
+        getAsyncBroadcastTask().cancel();
+        setMessageIndex(0);
+        getBroadcasts().clear();
+        loadMessages();
     }
 
 
@@ -120,14 +121,14 @@ public class    BroadcastPlugin {
         ConfigurationNode rootNode;
         try {
             rootNode = loader.load();
-        } catch(IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             getLogger().error("Unable to load config. Please see stack trace above. Plugin will not start.");
             return;
         }
         try {
             for (String s : rootNode.getNode("messages").getList(TypeToken.of(String.class))) {
-                Text text = TextSerializers.FORMATTING_CODE.deserialize(rootNode.getNode("prefix"). getString() + s);
+                Text text = TextSerializers.FORMATTING_CODE.deserialize(rootNode.getNode("prefix").getString() + s);
                 broadcasts.add(new BroadcastAnnounce(this, text));
             }
         } catch (ObjectMappingException e) {
