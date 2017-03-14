@@ -4,6 +4,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.github.zachoooo.broadcast.Broadcast;
 import io.github.zachoooo.broadcast.BroadcastAnnounce;
+import io.github.zachoooo.command.ReloadCommand;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -11,6 +12,7 @@ import ninja.leaping.configurate.loader.ConfigurationLoader;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.config.DefaultConfig;
 import org.spongepowered.api.event.Listener;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
@@ -46,7 +48,7 @@ import java.util.concurrent.TimeUnit;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 @Plugin(id = "broadcast", name = "Broadcast", version = "1.0", description = "Automatically make broadcasts to your server.")
-public class BroadcastPlugin {
+public class    BroadcastPlugin {
 
     @Inject
     private Logger logger;
@@ -61,9 +63,49 @@ public class BroadcastPlugin {
 
     private List<Broadcast> broadcasts = new ArrayList<Broadcast>();
     private int messageIndex = 0;
+    private Task asyncBroadcastTask;
 
     @Listener
     public void onServerStart(GameStartedServerEvent event) {
+        loadMessages();
+        CommandSpec reloadCommand = CommandSpec.builder()
+                .description(Text.of("Reload the configuration for Broadcast"))
+                .permission("broadcast.admin")
+                .executor(new ReloadCommand(this))
+                .build();
+        Sponge.getCommandManager().register(this, reloadCommand, "broadcast-reload");
+    }
+
+
+    public Logger getLogger() {
+        return logger;
+    }
+
+    public Path getConfigPath() {
+        return defaultConfig;
+    }
+
+    public List<Broadcast> getBroadcasts() {
+        return broadcasts;
+    }
+
+    public int getMessageIndex() {
+        return messageIndex;
+    }
+
+    public Task getAsyncBroadcastTask() {
+        return asyncBroadcastTask;
+    }
+
+    public void setMessageIndex(int messageIndex) {
+        this.messageIndex = messageIndex;
+    }
+
+    public void setAsyncBroadcastTask(Task asyncBroadcastTask) {
+        this.asyncBroadcastTask = asyncBroadcastTask;
+    }
+
+    public void loadMessages() {
         getLogger().info("Loading messages...");
         Path potentialFile = getConfigPath();
         URL jarConfigFile = Sponge.getAssetManager().getAsset(this, "defaultConfig.conf").get().getUrl();
@@ -106,7 +148,7 @@ public class BroadcastPlugin {
         }
         getLogger().info("Successfully loaded messages.");
         long delay = rootNode.getNode("delay").getInt();
-        Task.builder().async().interval(delay, TimeUnit.SECONDS).name("Broadcast - Schedule Messages").execute(() -> {
+        asyncBroadcastTask = Task.builder().async().interval(delay, TimeUnit.SECONDS).name("Broadcast - Schedule Messages").execute(() -> {
             if (rootNode.getNode("random").getBoolean(false)) {
                 Random random = new Random();
                 Broadcast randomBroadcast = broadcasts.get(random.nextInt(broadcasts.size()));
@@ -119,14 +161,5 @@ public class BroadcastPlugin {
                 }
             }
         }).submit(this);
-    }
-
-
-    public Logger getLogger() {
-        return logger;
-    }
-
-    public Path getConfigPath() {
-        return defaultConfig;
     }
 }
