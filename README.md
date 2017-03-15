@@ -27,24 +27,66 @@ Donations of any kind are always appreciated. [Donate here!](https://www.paypal.
 ## Configuration
 **Default Config**
 ```
-messages = [
-    "&4Thanks for choosing this plugin",
-    "&4This plugin was written by zachoooo.",
-    "&4Edit the configuration and put your own messages in."
-]
 delay=60
-prefix="[&6Broadcast&r] "
+messages=[
+    {
+        color=red
+        text="Thank you for choosing Broadcast!"
+    },
+    {
+        color=yellow
+        text="This plugin was written by zachoooo."
+    },
+    {
+        color=aqua
+        text="Edit the configuration to put your own messages in."
+    },
+    {
+        color=yellow
+        extra=[
+            {
+                text="["
+            },
+            {
+                clickEvent {
+                    action="open_url"
+                    value="http://www.github.com/zachoooo/Broadcast"
+                }
+                color=green
+                text=Github
+            }
+        ]
+        text="Fork me on "
+    }
+]
+prefix {
+    extra=[
+        {
+            color=yellow
+            text=Broadcast
+        },
+        {
+            text="] "
+        }
+    ]
+    text="["
+}
 random=false
+
 ```
 
 **delay**: The time in seconds between broadcasts being displayed
 
-**prefix**: Some text displayed before a broadcast to indicate that the message is a broadcast. Can be an empty string `"""`.
+**prefix**: Some text displayed before a broadcast to indicate that the message is a broadcast.
 
 **random**: Whether or not to display the messages randomly or in order.
 
 You can use configuration formatting from here:
-http://minecraft.gamepedia.com/Formatting_codes
+http://minecraft.gamepedia.com/Commands#Raw_JSON_text
+
+There are some generators that you can use to help you format chat:
+* https://www.minecraftjson.com/
+* http://minecraft.tools/en/tellraw.php
 
 ## Building
 
