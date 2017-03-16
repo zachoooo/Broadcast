@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-@Plugin(id = "broadcast", name = "Broadcast", version = "1.1.2", description = "Automatically make broadcasts to your server.")
+@Plugin(id = "broadcast", name = "Broadcast", version = "1.1.3", description = "Automatically make broadcasts to your server.")
 public class BroadcastPlugin {
 
     @Inject
@@ -109,15 +109,18 @@ public class BroadcastPlugin {
     public void loadMessages() {
         getLogger().info("Loading messages...");
         Path potentialFile = getConfigPath();
-        URL jarConfigFile = Sponge.getAssetManager().getAsset(this, "defaultConfig.conf").get().getUrl();
         ConfigurationLoader<CommentedConfigurationNode> loader;
-        if (Files.exists(potentialFile)) {
+        if (!Files.exists(potentialFile)) {
+            try {
+                Sponge.getAssetManager().getAsset(this, "defaultConfig.conf").get().copyToFile(potentialFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+                getLogger().error("Unable to load default config. Shutting down plugin. Report this error to plugin developer.");
+                return;
+            }
+        }
             loader =
                     HoconConfigurationLoader.builder().setPath(potentialFile).build();
-        } else {
-            loader =
-                    HoconConfigurationLoader.builder().setURL(jarConfigFile).build();
-        }
         ConfigurationNode rootNode;
         try {
             rootNode = loader.load();
@@ -139,13 +142,6 @@ public class BroadcastPlugin {
         if (broadcasts.size() == 0) {
             getLogger().error("No messages listed in config file. Please add some messages!");
             return;
-        }
-        try {
-            loader =
-                    HoconConfigurationLoader.builder().setPath(potentialFile).build();
-            loader.save(rootNode);
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         getLogger().info("Successfully loaded messages.");
         long delay = rootNode.getNode("delay").getInt();
