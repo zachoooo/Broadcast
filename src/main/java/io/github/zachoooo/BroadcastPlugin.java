@@ -4,6 +4,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.github.zachoooo.broadcast.Broadcast;
 import io.github.zachoooo.broadcast.BroadcastAnnounce;
+import io.github.zachoooo.broadcast.BroadcastCommand;
 import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
@@ -135,8 +136,15 @@ public class BroadcastPlugin {
         }
         try {
             for (Text text : rootNode.getNode("messages").getList(TypeToken.of(Text.class))) {
-                text = rootNode.getNode("prefix").getValue(TypeToken.of(Text.class)).concat(text);
-                broadcasts.add(new BroadcastAnnounce(this, text));
+                Broadcast broadcast;
+                if (text.toPlain().startsWith("/")) {
+                    broadcast = new BroadcastCommand(this, text.toPlain());
+                } else {
+                    text = rootNode.getNode("prefix").getValue(TypeToken.of(Text.class)).concat(text);
+                    broadcast = new BroadcastAnnounce(this, text);
+                }
+
+                broadcasts.add(broadcast);
             }
         } catch (ObjectMappingException e) {
             e.printStackTrace();
