@@ -18,10 +18,8 @@ import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.plugin.Plugin;
 import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.serializer.TextSerializers;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -62,7 +60,9 @@ public class BroadcastPlugin {
 
     private List<Broadcast> broadcasts = new ArrayList<Broadcast>();
     private int messageIndex = 0;
+    private int previousIndex = 0;
     private Task asyncBroadcastTask;
+    private boolean noRepeat;
 
     @Listener
     public void onServerStart(GameStartedServerEvent event) {
@@ -94,16 +94,20 @@ public class BroadcastPlugin {
         return messageIndex;
     }
 
-    public Task getAsyncBroadcastTask() {
-        return asyncBroadcastTask;
-    }
-
     public void setMessageIndex(int messageIndex) {
         this.messageIndex = messageIndex;
     }
 
+    public Task getAsyncBroadcastTask() {
+        return asyncBroadcastTask;
+    }
+
     public void setAsyncBroadcastTask(Task asyncBroadcastTask) {
         this.asyncBroadcastTask = asyncBroadcastTask;
+    }
+
+    public void setPreviousIndex(int i) {
+        previousIndex = i;
     }
 
     public void loadMessages() {
@@ -119,8 +123,8 @@ public class BroadcastPlugin {
                 return;
             }
         }
-            loader =
-                    HoconConfigurationLoader.builder().setPath(potentialFile).build();
+        loader =
+                HoconConfigurationLoader.builder().setPath(potentialFile).build();
         ConfigurationNode rootNode;
         try {
             rootNode = loader.load();
@@ -145,11 +149,19 @@ public class BroadcastPlugin {
         }
         getLogger().info("Successfully loaded messages.");
         long delay = rootNode.getNode("delay").getInt();
+        noRepeat = rootNode.getNode("no-repeat").getBoolean();
         asyncBroadcastTask = Task.builder().async().interval(delay, TimeUnit.SECONDS).name("Broadcast - Schedule Messages").execute(() -> {
             if (rootNode.getNode("random").getBoolean(false)) {
                 Random random = new Random();
-                Broadcast randomBroadcast = broadcasts.get(random.nextInt(broadcasts.size()));
+                int nextIndex = random.nextInt(broadcasts.size());
+                if (noRepeat && broadcasts.size() > 1) {
+                    while (nextIndex == previousIndex) {
+                        nextIndex = random.nextInt(broadcasts.size());
+                    }
+                }
+                Broadcast randomBroadcast = broadcasts.get(nextIndex);
                 randomBroadcast.runBroadcast();
+                previousIndex = nextIndex;
             } else {
                 Broadcast broadcast = broadcasts.get(messageIndex++);
                 broadcast.runBroadcast();
@@ -158,5 +170,9 @@ public class BroadcastPlugin {
                 }
             }
         }).submit(this);
+    }
+
+    public boolean isNoRepeat() {
+        return noRepeat;
     }
 }
