@@ -156,8 +156,8 @@ public class BroadcastPlugin {
             return;
         }
         getLogger().info("Successfully loaded messages.");
-        long delay = rootNode.getNode("delay").getInt();
-        noRepeat = rootNode.getNode("no-repeat").getBoolean();
+        long delay = rootNode.getNode("delay").getInt(60);
+        noRepeat = rootNode.getNode("no-repeat").getBoolean(true);
         asyncBroadcastTask = Task.builder().async().interval(delay, TimeUnit.SECONDS).name("Broadcast - Schedule Messages").execute(() -> {
             if (rootNode.getNode("random").getBoolean(false)) {
                 Random random = new Random();
