@@ -31,6 +31,6 @@ public class BroadcastCommand extends Broadcast {
 
     @Override
     public void runBroadcast() {
-        Sponge.getCommandManager().process(Sponge.getServer().getConsole(), command);
+        Sponge.getGame().getCommandManager().process(Sponge.getServer().getConsole(), command);
     }
 }

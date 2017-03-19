@@ -138,7 +138,7 @@ public class BroadcastPlugin {
             for (Text text : rootNode.getNode("messages").getList(TypeToken.of(Text.class))) {
                 Broadcast broadcast;
                 if (text.toPlain().startsWith("/")) {
-                    broadcast = new BroadcastCommand(this, text.toPlain());
+                    broadcast = new BroadcastCommand(this, text.toPlain().substring(1));
                 } else {
                     text = rootNode.getNode("prefix").getValue(TypeToken.of(Text.class)).concat(text);
                     broadcast = new BroadcastAnnounce(this, text);

@@ -72,6 +72,7 @@ prefix {
     text="["
 }
 random=false
+no-repeat=true
 
 ```
 
@@ -80,6 +81,8 @@ random=false
 **prefix**: Some text displayed before a broadcast to indicate that the message is a broadcast.
 
 **random**: Whether or not to display the messages randomly or in order.
+
+**no-repeat**: If random is set to true, then don't repeat the same message twice.
 
 You can use configuration formatting from here:
 http://minecraft.gamepedia.com/Commands#Raw_JSON_text
