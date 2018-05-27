@@ -3,9 +3,9 @@ plugins {
 }
 
 group = 'io.github.zachoooo'
-version = '1.0-SNAPSHOT'
-description = 'An example plugin'
+version = '1.2.1'
+description = 'Automatically make broadcasts to your server.'
 
 dependencies {
-    compile 'org.spongepowered:spongeapi:5.1.0'
+    compile 'org.spongepowered:spongeapi:7.0.0'
 }
